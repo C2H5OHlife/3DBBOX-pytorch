@@ -1,0 +1,8 @@
+kitti_path: K:/Dataset/KITTI/object
+epochs: 20
+bins: 2
+w: 8
+alpha: 4
+beta: 4
+batches: 8
+result_path: ./result
