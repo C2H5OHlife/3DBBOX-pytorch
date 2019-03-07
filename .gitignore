@@ -1,0 +1,6 @@
+*.pyc
+*.swp
+Test/data
+models/
+result/
+.idea
