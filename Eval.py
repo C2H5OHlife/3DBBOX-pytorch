@@ -27,6 +27,8 @@ dims_avg = {
             'Truck': np.array([3.07392252, 2.63079903, 11.2190799])
         }
 
+WRITE_RESULT = False
+
 if __name__ == '__main__':
     store_path = os.path.abspath(os.path.dirname(__file__)) + '/models'
     if not os.path.isdir(store_path):
@@ -46,16 +48,16 @@ if __name__ == '__main__':
     result_path = config['result_path']
 
     data = Dataset.ImageDataset(path + '/training')
-    data = Dataset.BatchDataset(data, batches, bins, mode = 'eval')
+    data = Dataset.BatchDataset(data, batches, bins, mode='eval')
     
     if len(model_lst) == 0:
         print('No previous model found, please check it')
         exit()
     else:
-        print('Find previous model %s'%model_lst[-1])
+        print('Find previous model %s' % model_lst[-1])
         vgg = vgg.vgg19_bn(pretrained=False)
         model = Model.Model(features=vgg.features, bins=bins, mode='test').cuda()
-        params = torch.load(store_path + '/%s'%model_lst[-1])
+        params = torch.load(store_path + '/%s' % model_lst[-1])
         model.load_state_dict(params)
         model.eval()
 
@@ -86,6 +88,9 @@ if __name__ == '__main__':
         if theta > 180: theta -= 360
         alpha = theta - (90 - info['ThetaRay'])
 
+        dim_error = np.mean(abs(np.array(dimGT) - dim))
+        dimension_error.append(dim_error)
+
         # 计算尺寸
         if info['Class'] in dims_avg:
             dim = dims_avg[info['Class']] + dim
@@ -96,28 +101,26 @@ if __name__ == '__main__':
         loc = compute_location(info['Box_2D'], dim, theta * np.pi / 180, info['Intrinsic'], vp)
 
         # write result to file
-        with open(result_path + '/' + info['ID'] + '.txt', 'a') as box_3d:
-            line = [info['Class'],
-                    info['Truncated'],
-                    info['Occluded'],
-                    alpha * np.pi / 180,  # Alpha
-                    info['Box_2D'][0][0], info['Box_2D'][0][1], info['Box_2D'][1][0], info['Box_2D'][1][1],
-                    dim[0], dim[1], dim[2],
-                    loc[0, 0], loc[1, 0], loc[2, 0],
-                    # info['Location'][0], info['Location'][1], info['Location'][2],
-                    theta * np.pi / 180,  # Ry
-                    conf[argmax],  # score
-                    ]
-            line = map(str, line)
-            line = ' '.join(line) + '\n'
-            box_3d.write(line)
+        if WRITE_RESULT:
+            with open(result_path + '/' + info['ID'] + '.txt', 'a') as box_3d:
+                line = [info['Class'],
+                        info['Truncated'],
+                        info['Occluded'],
+                        alpha * np.pi / 180,  # Alpha
+                        info['Box_2D_float'][0], info['Box_2D_float'][1], info['Box_2D_float'][2], info['Box_2D_float'][3],
+                        dim[0], dim[1], dim[2],
+                        loc[0, 0], loc[1, 0], loc[2, 0],
+                        # info['Location'][0], info['Location'][1], info['Location'][2],
+                        theta * np.pi / 180,  # Ry
+                        conf[argmax],  # score
+                        ]
+                line = map(str, line)
+                line = ' '.join(line) + '\n'
+                box_3d.write(line)
         
         theta_error = abs(Ry - theta)
         if theta_error > 180: theta_error = 360 - theta_error
         angle_error.append(theta_error)
-
-        dim_error = np.mean(abs(np.array(dimGT) - dim))
-        dimension_error.append(dim_error)
         
         #if i % 60 == 0:
         #    print (theta, Ry)
