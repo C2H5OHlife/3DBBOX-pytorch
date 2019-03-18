@@ -27,7 +27,7 @@ dims_avg = {
             'Truck': np.array([3.07392252, 2.63079903, 11.2190799])
         }
 
-WRITE_RESULT = False
+WRITE_RESULT = True
 
 if __name__ == '__main__':
     store_path = os.path.abspath(os.path.dirname(__file__)) + '/models'
